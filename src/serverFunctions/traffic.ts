@@ -4,6 +4,7 @@ import { requireProjectContext } from "@/serverFunctions/middleware";
 import { TrafficService } from "@/server/features/traffic/services/TrafficService";
 
 const trafficSchema = z.object({
+  projectId: z.string().min(1),
   domain: z.string().min(1).max(253),
   competitors: z.array(z.string().min(1).max(253)).max(9).default([]),
   locationCode: z.number().int().optional(),

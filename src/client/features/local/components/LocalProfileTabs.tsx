@@ -124,10 +124,12 @@ export function ProfileCard({
 }
 
 export function GridTab({
+  projectId,
   defaultKeyword,
   target,
   center,
 }: {
+  projectId: string;
   defaultKeyword: string;
   target: { cid?: string; placeId?: string; name?: string };
   center: { latitude: number; longitude: number } | undefined;
@@ -135,7 +137,7 @@ export function GridTab({
   const [keyword, setKeyword] = useState(defaultKeyword);
   const [gridSize, setGridSize] = useState<3 | 5>(3);
   const [spacingKm, setSpacingKm] = useState(2);
-  const grid = useLocalRankGridMutation();
+  const grid = useLocalRankGridMutation(projectId);
 
   if (!center) {
     return (

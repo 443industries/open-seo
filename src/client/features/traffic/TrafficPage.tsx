@@ -47,7 +47,7 @@ export function TrafficPage({
     enabled: domain.trim() !== "",
     queryKey: ["traffic", projectId, domain, competitors],
     queryFn: () =>
-      getTraffic({ data: { domain: domain.trim(), competitors } }),
+      getTraffic({ data: { projectId, domain: domain.trim(), competitors } }),
     staleTime: 10 * 60_000,
   });
 

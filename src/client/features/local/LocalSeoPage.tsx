@@ -130,6 +130,7 @@ export function LocalSeoPage({
 
           {tab === "grid" ? (
             <GridTab
+              projectId={projectId}
               defaultKeyword={profile.category ?? business}
               target={{
                 cid: profile.cid ?? undefined,
@@ -142,6 +143,7 @@ export function LocalSeoPage({
 
           {tab === "reviews" ? (
             <ReviewsTab
+              projectId={projectId}
               cid={profile.cid ?? undefined}
               businessName={profile.title ?? business}
             />

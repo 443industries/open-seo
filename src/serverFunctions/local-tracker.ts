@@ -4,6 +4,7 @@ import { requireProjectContext } from "@/serverFunctions/middleware";
 import { LocalGridTrackerService } from "@/server/features/local/services/LocalGridTrackerService";
 
 const createTrackerSchema = z.object({
+  projectId: z.string().min(1),
   label: z.string().min(1).max(120),
   keyword: z.string().min(1).max(120),
   target: z.object({
@@ -21,7 +22,10 @@ const createTrackerSchema = z.object({
   scheduleInterval: z.enum(["daily", "weekly", "monthly", "manual"]).optional(),
 });
 
-const trackerIdSchema = z.object({ trackerId: z.string().min(1).max(64) });
+const trackerIdSchema = z.object({
+  projectId: z.string().min(1),
+  trackerId: z.string().min(1).max(64),
+});
 
 export const createLocalTracker = createServerFn({ method: "POST" })
   .middleware(requireProjectContext)
@@ -43,6 +47,7 @@ export const createLocalTracker = createServerFn({ method: "POST" })
 
 export const listLocalTrackers = createServerFn({ method: "GET" })
   .middleware(requireProjectContext)
+  .validator(z.object({ projectId: z.string().min(1) }))
   .handler(async ({ context }) =>
     LocalGridTrackerService.listTrackers(context.projectId),
   );

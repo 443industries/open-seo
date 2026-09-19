@@ -7,13 +7,15 @@ import {
 } from "@/client/features/local/hooks/useLocalQueries";
 
 export function ReviewsTab({
+  projectId,
   cid,
   businessName,
 }: {
+  projectId: string;
   cid?: string;
   businessName: string;
 }) {
-  const reviews = useBusinessReviewsMutation();
+  const reviews = useBusinessReviewsMutation(projectId);
   const [collected, setCollected] = useState<
     | {
         rating: number | null;

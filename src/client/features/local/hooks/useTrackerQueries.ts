@@ -10,7 +10,7 @@ import {
 export function useTrackersQuery(projectId: string) {
   return useQuery({
     queryKey: ["local-trackers", projectId],
-    queryFn: () => listLocalTrackers(),
+    queryFn: () => listLocalTrackers({ data: { projectId } }),
     staleTime: 60_000,
   });
 }
@@ -26,7 +26,7 @@ export function useCreateTrackerMutation(projectId: string) {
       gridSize?: 3 | 5;
       spacingKm?: number;
       scheduleInterval?: "daily" | "weekly" | "monthly" | "manual";
-    }) => createLocalTracker({ data }),
+    }) => createLocalTracker({ data: { projectId, ...data } }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["local-trackers", projectId] }),
   });
@@ -36,7 +36,7 @@ export function useDeleteTrackerMutation(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (trackerId: string) =>
-      deleteLocalTracker({ data: { trackerId } }),
+      deleteLocalTracker({ data: { projectId, trackerId } }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["local-trackers", projectId] }),
   });
@@ -45,19 +45,26 @@ export function useDeleteTrackerMutation(projectId: string) {
 export function useRunTrackerMutation(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (trackerId: string) => runLocalTracker({ data: { trackerId } }),
+    mutationFn: (trackerId: string) =>
+      runLocalTracker({ data: { projectId, trackerId } }),
     onSuccess: (_res, trackerId) => {
       void qc.invalidateQueries({ queryKey: ["local-trackers", projectId] });
-      void qc.invalidateQueries({ queryKey: ["local-tracker-history", trackerId] });
+      void qc.invalidateQueries({
+        queryKey: ["local-tracker-history", trackerId],
+      });
     },
   });
 }
 
-export function useTrackerHistoryQuery(trackerId: string | null) {
+export function useTrackerHistoryQuery(
+  projectId: string,
+  trackerId: string | null,
+) {
   return useQuery({
     enabled: trackerId != null,
     queryKey: ["local-tracker-history", trackerId],
-    queryFn: () => getLocalTrackerHistory({ data: { trackerId: trackerId! } }),
+    queryFn: () =>
+      getLocalTrackerHistory({ data: { projectId, trackerId: trackerId! } }),
     staleTime: 30_000,
   });
 }

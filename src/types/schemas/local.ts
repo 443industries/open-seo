@@ -15,6 +15,8 @@ const businessIdentifierFields = {
 };
 
 export const localProfileSchema = z.object({
+  // Project context is resolved from data.projectId by ensureUserMiddleware.
+  projectId: z.string().min(1),
   ...businessIdentifierFields,
   near: nearSchema.optional(),
   locationCode: z.number().int().optional(),
@@ -23,6 +25,7 @@ export const localProfileSchema = z.object({
 export type LocalProfileRequest = z.infer<typeof localProfileSchema>;
 
 export const nearbyListingsSchema = z.object({
+  projectId: z.string().min(1),
   categories: z.array(z.string().min(1)).max(10).optional(),
   title: z.string().min(1).max(200).optional(),
   near: nearSchema,
@@ -30,6 +33,7 @@ export const nearbyListingsSchema = z.object({
 });
 
 export const localRankGridSchema = z.object({
+  projectId: z.string().min(1),
   keyword: z.string().min(1).max(120),
   target: z.object({
     cid: z.string().min(1).max(64).optional(),
@@ -49,6 +53,7 @@ export const localRankGridSchema = z.object({
 export type LocalRankGridRequest = z.infer<typeof localRankGridSchema>;
 
 export const localReviewsSchema = z.object({
+  projectId: z.string().min(1),
   ...businessIdentifierFields,
   near: nearSchema.optional(),
   locationCode: z.number().int().optional(),

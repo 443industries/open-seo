@@ -166,14 +166,22 @@ function TrackerRow({
           </div>
         ) : null}
 
-        {expanded ? <TrackerDetail trackerId={tracker.id} /> : null}
+        {expanded ? (
+          <TrackerDetail projectId={projectId} trackerId={tracker.id} />
+        ) : null}
       </div>
     </div>
   );
 }
 
-function TrackerDetail({ trackerId }: { trackerId: string }) {
-  const history = useTrackerHistoryQuery(trackerId);
+function TrackerDetail({
+  projectId,
+  trackerId,
+}: {
+  projectId: string;
+  trackerId: string;
+}) {
+  const history = useTrackerHistoryQuery(projectId, trackerId);
 
   if (history.isLoading) {
     return (

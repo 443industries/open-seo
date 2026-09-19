@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireProjectContext } from "@/serverFunctions/middleware";
 import {
   localProfileSchema,
@@ -68,6 +69,7 @@ export const getNearbyListings = createServerFn({ method: "POST" })
 
 export const getBusinessCategories = createServerFn({ method: "GET" })
   .middleware(requireProjectContext)
+  .validator(z.object({ projectId: z.string().min(1) }))
   .handler(async () => LocalProfileService.listCategories());
 
 export const getLocalRankGrid = createServerFn({ method: "POST" })

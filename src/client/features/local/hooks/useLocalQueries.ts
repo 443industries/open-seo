@@ -21,6 +21,7 @@ export function useLocalProfileQuery(input: ProfileInput) {
     queryFn: () =>
       getLocalProfile({
         data: {
+          projectId: input.projectId,
           businessName: name,
           near: input.near,
         },
@@ -47,6 +48,7 @@ export function useNearbyListingsQuery(input: {
     queryFn: () =>
       getNearbyListings({
         data: {
+          projectId: input.projectId,
           categories: input.categories,
           near: input.near!,
           limit: 20,
@@ -57,7 +59,7 @@ export function useNearbyListingsQuery(input: {
 }
 
 /** Runs a one-shot local rank grid. A mutation — each run spends credits. */
-export function useLocalRankGridMutation() {
+export function useLocalRankGridMutation(projectId: string) {
   return useMutation({
     mutationFn: (data: {
       keyword: string;
@@ -66,12 +68,12 @@ export function useLocalRankGridMutation() {
       gridSize?: 3 | 5;
       spacingKm?: number;
       device?: "desktop" | "mobile";
-    }) => getLocalRankGrid({ data }),
+    }) => getLocalRankGrid({ data: { projectId, ...data } }),
   });
 }
 
 /** Posts a reviews task, then polls with the returned taskId until completed. */
-export function useBusinessReviewsMutation() {
+export function useBusinessReviewsMutation(projectId: string) {
   return useMutation({
     mutationFn: (data: {
       businessName?: string;
@@ -80,6 +82,6 @@ export function useBusinessReviewsMutation() {
       depth?: number;
       sortBy?: "newest" | "highest_rating" | "lowest_rating";
       taskId?: string;
-    }) => getBusinessReviews({ data }),
+    }) => getBusinessReviews({ data: { projectId, ...data } }),
   });
 }
