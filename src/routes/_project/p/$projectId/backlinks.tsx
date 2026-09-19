@@ -1,5 +1,7 @@
+import { useEffect, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BacklinksPage } from "@/client/features/backlinks/BacklinksPage";
+import { useProjectDomain } from "@/client/features/projects/useProjectDefaults";
 import {
   DEFAULT_BACKLINKS_PAGE_SIZE,
   backlinksSearchSchema,
@@ -25,6 +27,20 @@ function BacklinksRoute() {
     view,
   } = Route.useSearch();
   const scope = rawScope ?? defaultScopeForInput(target);
+
+  // Phase 2: default the target to the project's own domain on first open.
+  const projectDomain = useProjectDomain(projectId);
+  const appliedDefault = useRef(false);
+  useEffect(() => {
+    if (appliedDefault.current || target || projectDomain === undefined) return;
+    appliedDefault.current = true;
+    if (projectDomain) {
+      void navigate({
+        search: (prev) => ({ ...prev, target: projectDomain }),
+        replace: true,
+      });
+    }
+  }, [projectDomain, target, navigate]);
 
   return (
     <BacklinksPage

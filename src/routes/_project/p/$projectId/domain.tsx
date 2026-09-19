@@ -1,9 +1,11 @@
+import { useEffect, useRef } from "react";
 import {
   createFileRoute,
   stripSearchParams,
   useNavigate,
 } from "@tanstack/react-router";
 import { DomainOverviewPage } from "@/client/features/domain/DomainOverviewPage";
+import { useProjectDomain } from "@/client/features/projects/useProjectDefaults";
 import {
   DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
   domainSearchSchema,
@@ -52,6 +54,21 @@ function DomainOverviewRoute() {
   const search = Route.useSearch();
   const projectMarket = useProjectMarket(projectId);
   const routeState = getDomainRouteState(search, projectMarket);
+
+  // Phase 2: default the target to the project's own domain on first open.
+  const projectDomain = useProjectDomain(projectId);
+  const appliedDefault = useRef(false);
+  useEffect(() => {
+    if (appliedDefault.current || search.domain || projectDomain === undefined)
+      return;
+    appliedDefault.current = true;
+    if (projectDomain) {
+      void navigate({
+        search: (prev) => ({ ...prev, domain: projectDomain }),
+        replace: true,
+      });
+    }
+  }, [projectDomain, search.domain, navigate]);
 
   return (
     <DomainOverviewPage

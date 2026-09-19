@@ -28,7 +28,6 @@ import {
   fetchReferringDomains,
 } from "@/server/lib/dataforseo/backlinks";
 import {
-  fetchBulkTrafficEstimation,
   fetchDomainRankOverview,
   fetchKeywordIdeas,
   fetchKeywordOverview,
@@ -38,6 +37,10 @@ import {
   fetchRelevantPages,
   fetchSerpCompetitors,
 } from "@/server/lib/dataforseo/labs";
+import {
+  fetchBulkTrafficEstimation,
+  fetchCompetitorsDomain,
+} from "@/server/lib/dataforseo/labs-competitive";
 import {
   fetchAdsKeywordIdeas,
   fetchAdsSearchVolume,
@@ -119,6 +122,7 @@ export function createDataforseoClient(customer: BillingCustomerContext) {
       rankedKeywords: meter(customer, fetchRankedKeywords),
       relevantPages: meter(customer, fetchRelevantPages),
       bulkTrafficEstimation: meter(customer, fetchBulkTrafficEstimation),
+      competitorsDomain: meter(customer, fetchCompetitorsDomain),
     },
     serp: {
       live: meter(customer, fetchLiveSerp),

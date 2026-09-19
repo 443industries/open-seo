@@ -1,10 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AlertCircle, Loader2, BarChart3 } from "lucide-react";
 import { getTraffic } from "@/serverFunctions/traffic";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { SafeExternalLink } from "@/client/components/SafeExternalLink";
+import {
+  useProjectDomain,
+  useProjectCompetitors,
+} from "@/client/features/projects/useProjectDefaults";
 
 function parseList(input: string): string[] {
   return Array.from(
@@ -42,6 +46,35 @@ export function TrafficPage({
   );
   const [domain, setDomain] = useState(initialDomain);
   const [competitors, setCompetitors] = useState(initialCompetitors);
+
+  // Phase 2: default to the project's own domain + shared competitor set on
+  // first open, so the tab lands on the client-vs-competitor view.
+  const projectDomain = useProjectDomain(projectId);
+  const projectCompetitors = useProjectCompetitors(projectId);
+  const appliedDefaults = useRef(false);
+  useEffect(() => {
+    if (appliedDefaults.current) return;
+    if (initialDomain) {
+      appliedDefaults.current = true;
+      return;
+    }
+    if (projectDomain === undefined) return; // projects still loading
+    appliedDefaults.current = true;
+    if (!projectDomain) return; // project has no domain set
+    const comps =
+      initialCompetitors.length > 0 ? initialCompetitors : projectCompetitors;
+    setDomainInput(projectDomain);
+    setDomain(projectDomain);
+    setCompetitorsInput(comps.join(", "));
+    setCompetitors(comps);
+    onChange(projectDomain, comps);
+  }, [
+    projectDomain,
+    projectCompetitors,
+    initialDomain,
+    initialCompetitors,
+    onChange,
+  ]);
 
   const traffic = useQuery({
     enabled: domain.trim() !== "",

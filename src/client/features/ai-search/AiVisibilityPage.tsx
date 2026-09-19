@@ -1,10 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { sortBy } from "remeda";
 import { AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { SafeExternalLink } from "@/client/components/SafeExternalLink";
 import { AiVisibilityScorecard } from "@/client/features/ai-search/components/AiVisibilityScorecard";
 import { useAiVisibilityQuery } from "@/client/features/ai-search/hooks/useAiVisibilityQuery";
+import {
+  useProjectDomain,
+  useProjectCompetitors,
+} from "@/client/features/projects/useProjectDefaults";
 import { parseCompetitorList } from "@/types/schemas/ai-search";
 import type { BrandLookupResult } from "@/types/schemas/ai-search";
 
@@ -32,6 +36,34 @@ export function AiVisibilityPage({
   );
   const [query, setQuery] = useState(initialQuery);
   const [competitors, setCompetitors] = useState(initialCompetitors);
+
+  // Phase 2: default to the project's own domain + shared competitor set.
+  const projectDomain = useProjectDomain(projectId);
+  const projectCompetitors = useProjectCompetitors(projectId);
+  const appliedDefaults = useRef(false);
+  useEffect(() => {
+    if (appliedDefaults.current) return;
+    if (initialQuery) {
+      appliedDefaults.current = true;
+      return;
+    }
+    if (projectDomain === undefined) return;
+    appliedDefaults.current = true;
+    if (!projectDomain) return;
+    const comps =
+      initialCompetitors.length > 0 ? initialCompetitors : projectCompetitors;
+    setQueryInput(projectDomain);
+    setQuery(projectDomain);
+    setCompetitorsInput(comps.join(", "));
+    setCompetitors(comps);
+    onChange(projectDomain, comps);
+  }, [
+    projectDomain,
+    projectCompetitors,
+    initialQuery,
+    initialCompetitors,
+    onChange,
+  ]);
 
   const visibility = useAiVisibilityQuery({ projectId, query, competitors });
 

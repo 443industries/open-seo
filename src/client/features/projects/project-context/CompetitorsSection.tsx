@@ -1,5 +1,8 @@
 import * as React from "react";
-import { Pencil, Plus } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Pencil, Plus, Sparkles, Loader2 } from "lucide-react";
+import { suggestProjectCompetitors } from "@/serverFunctions/competitors";
+import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import type { ProjectContextUpdate } from "@/types/schemas/projectContext";
 import {
   ConfirmDeleteButton,
@@ -23,6 +26,7 @@ export function CompetitorsSection({
   const update = useContextUpdate(projectId);
   const [adding, setAdding] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [suggesting, setSuggesting] = React.useState(false);
 
   const save = (previousDomain: string | null, draft: CompetitorDraft) => {
     const ops: ProjectContextUpdate[] = [];
@@ -57,16 +61,38 @@ export function CompetitorsSection({
         title="Competitors"
         hint="The sites you measure yourself against."
         action={
-          <button
-            type="button"
-            className="btn btn-ghost btn-xs"
-            onClick={() => setAdding(true)}
-          >
-            <Plus className="size-3.5" />
-            Add competitor
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={() => setSuggesting((v) => !v)}
+            >
+              <Sparkles className="size-3.5" />
+              Suggest
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={() => setAdding(true)}
+            >
+              <Plus className="size-3.5" />
+              Add competitor
+            </button>
+          </div>
         }
       />
+
+      {suggesting ? (
+        <SuggestCompetitors
+          projectId={projectId}
+          existing={competitors.map((c) => c.domain)}
+          onAdd={(domain) =>
+            update.mutate([
+              { addCompetitors: [{ domain, name: "", notes: "" }] },
+            ])
+          }
+        />
+      ) : null}
 
       {adding ? (
         <div className={listClass}>
@@ -217,5 +243,104 @@ function CompetitorForm({
         onCancel={onCancel}
       />
     </form>
+  );
+}
+
+// One-click competitor discovery: Labs competitors_domain for the project's own
+// domain. Already-added domains are hidden so the list is only new additions.
+function SuggestCompetitors({
+  projectId,
+  existing,
+  onAdd,
+}: {
+  projectId: string;
+  existing: string[];
+  onAdd: (domain: string) => void;
+}) {
+  const existingSet = new Set(existing);
+  const [added, setAdded] = React.useState<Set<string>>(new Set());
+  const suggest = useMutation({
+    mutationFn: () => suggestProjectCompetitors({ data: { projectId } }),
+  });
+
+  return (
+    <div className="rounded-box border border-base-300 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-base-content/70">
+          Find competitors from your domain’s organic rankings.
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary btn-xs"
+          disabled={suggest.isPending}
+          onClick={() => suggest.mutate()}
+        >
+          {suggest.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="size-3.5" />
+          )}
+          Suggest
+        </button>
+      </div>
+
+      {suggest.isError ? (
+        <p className="text-sm text-error">
+          {getStandardErrorMessage(suggest.error)}
+        </p>
+      ) : null}
+
+      {suggest.data && !suggest.data.hasDomain ? (
+        <p className="text-sm text-base-content/60">
+          Set the project’s domain first, then suggestions can be generated.
+        </p>
+      ) : null}
+
+      {suggest.data?.hasDomain && suggest.data.competitors.length === 0 ? (
+        <p className="text-sm text-base-content/60">No competitors found.</p>
+      ) : null}
+
+      {suggest.data && suggest.data.competitors.length > 0 ? (
+        <ul className="divide-y divide-base-200">
+          {suggest.data.competitors
+            .filter((c) => !existingSet.has(c.domain))
+            .map((c) => {
+              const isAdded = added.has(c.domain);
+              return (
+                <li
+                  key={c.domain}
+                  className="flex items-center justify-between gap-2 py-1.5"
+                >
+                  <span className="text-sm truncate">
+                    {c.domain}
+                    {c.intersections != null ? (
+                      <span className="text-xs text-base-content/40 ml-2">
+                        {c.intersections} shared kw
+                      </span>
+                    ) : null}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs"
+                    disabled={isAdded}
+                    onClick={() => {
+                      onAdd(c.domain);
+                      setAdded((prev) => new Set(prev).add(c.domain));
+                    }}
+                  >
+                    {isAdded ? (
+                      "Added"
+                    ) : (
+                      <>
+                        <Plus className="size-3.5" /> Add
+                      </>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+        </ul>
+      ) : null}
+    </div>
   );
 }

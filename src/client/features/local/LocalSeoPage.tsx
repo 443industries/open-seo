@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, MapPin, Search, Loader2 } from "lucide-react";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
+import { useProjectName } from "@/client/features/projects/useProjectDefaults";
 import { OptimizationScorecard } from "@/client/features/local/components/OptimizationScorecard";
 import {
   EmptyState,
@@ -38,6 +39,17 @@ export function LocalSeoPage({
   const [input, setInput] = useState(initialBusiness);
   const [business, setBusiness] = useState(initialBusiness);
   const [tab, setTab] = useState<Tab>(initialTab);
+
+  // Phase 2: prefill the lookup with the project/client name (input only — the
+  // GBP name may differ from the domain, so the operator confirms before it
+  // searches).
+  const projectName = useProjectName(projectId);
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (prefilled.current || initialBusiness || !projectName) return;
+    prefilled.current = true;
+    setInput(projectName);
+  }, [projectName, initialBusiness]);
 
   const profileQuery = useLocalProfileQuery({ projectId, businessName: business });
   const profile = profileQuery.data?.profile;
