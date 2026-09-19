@@ -71,6 +71,7 @@ export const localGridSnapshots = pgTable(
     top10Count: integer("top10_count").notNull().default(0),
     zoom: integer("zoom"),
     gridJson: text("grid_json").notNull(),
+    competitorsJson: text("competitors_json"),
     capturedAt: timestampColumn("captured_at").notNull().default(isoNow),
   },
   (table) => [

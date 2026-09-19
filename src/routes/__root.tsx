@@ -23,6 +23,7 @@ import {
 } from "@/client/lib/posthog";
 import { NotFound } from "@/client/components/NotFound";
 import appCss from "@/client/styles/app.css?url";
+import leafletCss from "leaflet/dist/leaflet.css?url";
 import { useSession } from "@/lib/auth-client";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { Toaster } from "sonner";
@@ -66,6 +67,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: leafletCss },
       {
         rel: "apple-touch-icon",
         sizes: "180x180",

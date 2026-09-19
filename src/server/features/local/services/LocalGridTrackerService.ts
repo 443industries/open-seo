@@ -157,6 +157,7 @@ async function runTracker(
       top10Count: result.summary.top10Count,
       zoom: result.zoom,
       gridJson: JSON.stringify(result.grid),
+      competitorsJson: JSON.stringify(result.competitors),
     })
     .returning({ id: localGridSnapshots.id });
 
@@ -184,6 +185,7 @@ export type TrackerSnapshot = {
   zoom: number | null;
   capturedAt: string;
   grid: LocalRankGridResult["grid"];
+  competitors: LocalRankGridResult["competitors"];
 };
 
 async function getTrackerHistory(input: {
@@ -208,16 +210,20 @@ async function getTrackerHistory(input: {
     top10Count: row.top10Count,
     zoom: row.zoom,
     capturedAt: row.capturedAt,
-    grid: safeParseGrid(row.gridJson),
+    grid: safeParseArray<LocalRankGridResult["grid"][number]>(row.gridJson),
+    competitors: safeParseArray<LocalRankGridResult["competitors"][number]>(
+      row.competitorsJson,
+    ),
   }));
   return { tracker, snapshots };
 }
 
-function safeParseGrid(json: string): LocalRankGridResult["grid"] {
+function safeParseArray<T>(json: string | null): T[] {
+  if (json == null) return [];
   try {
     const parsed: unknown = JSON.parse(json);
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- our own gridJson, written by runTracker via JSON.stringify(result.grid)
-    return Array.isArray(parsed) ? (parsed as LocalRankGridResult["grid"]) : [];
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- our own JSON, written by runTracker via JSON.stringify
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
   } catch {
     return [];
   }

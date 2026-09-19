@@ -7,6 +7,7 @@
 // snapshots (features/rank-tracking). Single source of truth for the geometry,
 // zoom derivation, matching, and summary maths.
 
+import { sortBy } from "remeda";
 import { AppError } from "@/server/lib/errors";
 import type { createDataforseoClient } from "@/server/lib/dataforseo";
 import { readPath } from "@/server/mcp/table";
@@ -69,9 +70,22 @@ export type LocalRankGridSummary = {
   top10Count: number;
 };
 
+// A rival business surfaced across the same grid scan (zero extra API cost —
+// each Maps SERP already returns every business ranked at that point). AR is the
+// mean organic rank across points where it appeared; coverage is the share of
+// points it ranked at. Mirrors Semrush's competitor sidebar.
+export type LocalRankGridCompetitor = {
+  title: string;
+  cid: string | null;
+  avgRank: number;
+  coverage: number;
+  pointsFound: number;
+};
+
 export type LocalRankGridResult = {
   grid: GridPointResult[];
   summary: LocalRankGridSummary;
+  competitors: LocalRankGridCompetitor[];
   matchedBusiness: {
     title: string | null;
     cid: string | null;
@@ -200,6 +214,28 @@ export async function computeLocalRankGrid(
 
   let matchedBusiness: LocalRankGridResult["matchedBusiness"] = null;
   let lastError: unknown = null;
+  // cid||title -> ranks across grid points, for the competitor sidebar. Populated
+  // from the same SERP items, so competitors cost nothing extra.
+  const competitorRanks = new Map<
+    string,
+    { title: string; cid: string | null; ranks: number[] }
+  >();
+
+  const targetName = input.target.name?.toLowerCase();
+  const isTargetItem = (item: unknown): boolean => {
+    if (input.target.cid != null && readString(item, "cid") === input.target.cid)
+      return true;
+    if (
+      input.target.placeId != null &&
+      readString(item, "place_id") === input.target.placeId
+    )
+      return true;
+    if (targetName != null) {
+      const title = readString(item, "title");
+      if (title != null && title.toLowerCase().includes(targetName)) return true;
+    }
+    return false;
+  };
 
   const searchPoint = async (point: GridPoint): Promise<GridPointResult> => {
     try {
@@ -220,9 +256,30 @@ export async function computeLocalRankGrid(
           placeId: readString(match, "place_id"),
         };
       }
-      const rank =
-        readPath(match, "rank_absolute") ?? readPath(match, "rank_group");
+      // rank_group = organic position (excludes the ad pins rank_absolute counts).
+      // Using rank_absolute here inflated Avg Rank vs Semrush; rank_group matches.
+      const rank = readPath(match, "rank_group");
       const first = items[0];
+
+      // Accumulate every non-target business's organic rank for the competitor
+      // aggregation below.
+      for (const item of items) {
+        if (isTargetItem(item)) continue;
+        const rg = readPath(item, "rank_group");
+        if (typeof rg !== "number") continue;
+        const cid = readString(item, "cid");
+        const title = readString(item, "title");
+        const key = cid ?? title;
+        if (key == null) continue;
+        const entry = competitorRanks.get(key) ?? {
+          title: title ?? key,
+          cid,
+          ranks: [],
+        };
+        entry.ranks.push(rg);
+        competitorRanks.set(key, entry);
+      }
+
       return {
         ...point,
         rank: typeof rank === "number" ? rank : null,
@@ -271,7 +328,39 @@ export async function computeLocalRankGrid(
     top10Count: ranks.filter((rank) => rank <= 10).length,
   };
 
-  return { grid, summary, matchedBusiness, gridSize, spacingKm, zoom };
+  // Rank rivals by coverage first (appear at many points), then AR — the ones
+  // genuinely competing across the area, not a one-point fluke. Top 8.
+  const pointsSearched = grid.length || 1;
+  const competitorRows: LocalRankGridCompetitor[] = [
+    ...competitorRanks.values(),
+  ]
+    .map((c) => ({
+      title: c.title,
+      cid: c.cid,
+      avgRank: Number(
+        (c.ranks.reduce((s, r) => s + r, 0) / c.ranks.length).toFixed(2),
+      ),
+      coverage: Number((c.ranks.length / pointsSearched).toFixed(2)),
+      pointsFound: c.ranks.length,
+    }))
+    .filter(
+      (c) => c.pointsFound >= Math.max(2, Math.ceil(pointsSearched * 0.2)),
+    );
+  const competitors = sortBy(
+    competitorRows,
+    [(c) => c.coverage, "desc"],
+    [(c) => c.avgRank, "asc"],
+  ).slice(0, 8);
+
+  return {
+    grid,
+    summary,
+    competitors,
+    matchedBusiness,
+    gridSize,
+    spacingKm,
+    zoom,
+  };
 }
 
 export { RANK_GRID_DEPTH };

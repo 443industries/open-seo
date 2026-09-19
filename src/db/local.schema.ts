@@ -72,6 +72,8 @@ export const localGridSnapshots = sqliteTable(
     top10Count: integer("top10_count").notNull().default(0),
     zoom: integer("zoom"),
     gridJson: text("grid_json").notNull(),
+    // JSON LocalRankGridCompetitor[] captured from the same scan.
+    competitorsJson: text("competitors_json"),
     capturedAt: text("captured_at")
       .notNull()
       .default(sql`(current_timestamp)`),

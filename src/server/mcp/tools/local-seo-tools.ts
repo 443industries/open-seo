@@ -962,8 +962,9 @@ export const getLocalRankGridTool = {
             placeId: readString(match, "place_id"),
           };
         }
-        const rank =
-          readPath(match, "rank_absolute") ?? readPath(match, "rank_group");
+        // rank_group = organic position (rank_absolute counts ad pins and
+        // inflates Avg Rank vs Semrush). Keep in sync with localRankGrid.ts.
+        const rank = readPath(match, "rank_group");
         const first = items[0];
         return {
           ...point,

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getStandardErrorMessage } from "@/client/lib/error-messages";
 import { RankGridHeatmap } from "@/client/features/local/components/RankGridHeatmap";
+import { RankGridMap } from "@/client/features/local/components/RankGridMap";
 import { CreateTrackerForm } from "@/client/features/local/components/CreateTrackerForm";
 import {
   useTrackersQuery,
@@ -199,7 +200,8 @@ function TrackerDetail({
     );
   }
   const snapshots = history.data?.snapshots ?? [];
-  if (snapshots.length === 0) {
+  const tracker = history.data?.tracker;
+  if (snapshots.length === 0 || !tracker) {
     return (
       <p className="text-sm text-base-content/60 mt-3">
         No snapshots yet — run the tracker to capture the first grid.
@@ -211,6 +213,7 @@ function TrackerDetail({
   const latest = snapshots[0];
   const trend = sortBy(snapshots, (s) => s.capturedAt);
   if (!latest) return null;
+  const center = { latitude: tracker.centerLat, longitude: tracker.centerLng };
   const latestResult: LocalRankGridResult = {
     grid: latest.grid,
     summary: {
@@ -220,25 +223,92 @@ function TrackerDetail({
       top3Count: latest.top3Count,
       top10Count: latest.top10Count,
     },
+    competitors: latest.competitors,
     matchedBusiness: null,
-    gridSize: Math.sqrt(latest.pointsSearched) || 3,
-    spacingKm: 2,
+    gridSize: Math.round(Math.sqrt(latest.pointsSearched)) || 3,
+    spacingKm: tracker.spacingKm,
     zoom: latest.zoom ?? 12,
   };
 
   return (
     <div className="mt-4 space-y-4 border-t border-base-200 pt-4">
+      <p className="text-xs uppercase tracking-wide text-base-content/60">
+        Latest scan ({new Date(latest.capturedAt).toLocaleString()})
+      </p>
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <RankGridMap
+          grid={latest.grid}
+          center={center}
+          zoom={latest.zoom ?? 12}
+        />
+        <CompetitorPanel
+          youLabel={tracker.targetName ?? tracker.label}
+          youAvgRank={latest.avgRank}
+          competitors={latest.competitors}
+        />
+      </div>
+      <RankGridHeatmap result={latestResult} />
       <AvgRankTrend
-        points={trend.map((s) => ({
-          at: s.capturedAt,
-          avg: s.avgRank,
-        }))}
+        points={trend.map((s) => ({ at: s.capturedAt, avg: s.avgRank }))}
       />
-      <div>
-        <p className="text-xs uppercase tracking-wide text-base-content/60 mb-2">
-          Latest grid ({new Date(latest.capturedAt).toLocaleString()})
-        </p>
-        <RankGridHeatmap result={latestResult} />
+    </div>
+  );
+}
+
+function arColor(ar: number | null): string {
+  if (ar == null) return "text-base-content/40";
+  if (ar <= 3) return "text-success";
+  if (ar <= 10) return "text-warning";
+  return "text-error";
+}
+
+// You + top rivals with Avg Rank across the grid — Semrush's competitor list.
+function CompetitorPanel({
+  youLabel,
+  youAvgRank,
+  competitors,
+}: {
+  youLabel: string;
+  youAvgRank: number | null;
+  competitors: LocalRankGridResult["competitors"];
+}) {
+  return (
+    <div className="card bg-base-100 border border-base-300 h-fit">
+      <div className="card-body p-3 gap-1">
+        <h3 className="text-sm font-semibold px-1">Competitors (Avg Rank)</h3>
+        <ul className="divide-y divide-base-200">
+          <li className="flex items-center justify-between gap-2 py-2 px-1 bg-primary/10 rounded">
+            <span className="text-sm font-semibold truncate">
+              {youLabel}
+              <span className="badge badge-primary badge-xs ml-2">You</span>
+            </span>
+            <span className={`text-sm font-bold ${arColor(youAvgRank)}`}>
+              {youAvgRank ?? "—"}
+            </span>
+          </li>
+          {competitors.length === 0 ? (
+            <li className="py-3 px-1 text-xs text-base-content/50">
+              No rivals surfaced across the grid.
+            </li>
+          ) : (
+            competitors.map((c) => (
+              <li
+                key={c.cid ?? c.title}
+                className="flex items-center justify-between gap-2 py-2 px-1"
+              >
+                <span className="text-sm truncate">
+                  {c.title}
+                  <span className="text-xs text-base-content/40 ml-1">
+                    {Math.round(c.coverage * 100)}%
+                  </span>
+                </span>
+                <span className={`text-sm font-semibold ${arColor(c.avgRank)}`}>
+                  {c.avgRank}
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
       </div>
     </div>
   );

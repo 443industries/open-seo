@@ -1,0 +1,1 @@
+ALTER TABLE `local_grid_snapshots` ADD `competitors_json` text;
