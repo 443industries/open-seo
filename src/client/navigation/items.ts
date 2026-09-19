@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Bookmark,
   Bot,
   Brain,
@@ -7,6 +8,8 @@ import {
   Globe,
   LayoutDashboard,
   Link2,
+  MapPin,
+  MapPinned,
   MessageSquare,
   Search,
   Sparkles,
@@ -50,6 +53,11 @@ const projectNavItems = [
     icon: Globe,
   },
   {
+    to: "/p/$projectId/traffic" as const,
+    label: "Traffic & Top Pages",
+    icon: BarChart3,
+  },
+  {
     to: "/p/$projectId/backlinks" as const,
     label: "Backlinks",
     icon: Link2,
@@ -58,6 +66,21 @@ const projectNavItems = [
     to: "/p/$projectId/audit" as const,
     label: "Site Audit",
     icon: ClipboardCheck,
+  },
+  {
+    to: "/p/$projectId/local" as const,
+    label: "Local SEO",
+    icon: MapPin,
+  },
+  {
+    to: "/p/$projectId/map-tracker" as const,
+    label: "Map Rank Tracker",
+    icon: MapPinned,
+  },
+  {
+    to: "/p/$projectId/ai-visibility" as const,
+    label: "AI Visibility",
+    icon: Sparkles,
   },
   {
     to: "/p/$projectId/brand-lookup" as const,
@@ -123,7 +146,9 @@ export function getProjectNavGroups(projectId: string) {
       items: [
         byPath("/p/$projectId/keywords"),
         byPath("/p/$projectId/domain"),
+        byPath("/p/$projectId/traffic"),
         byPath("/p/$projectId/backlinks"),
+        byPath("/p/$projectId/ai-visibility"),
         byPath("/p/$projectId/brand-lookup"),
         byPath("/p/$projectId/prompt-explorer"),
       ],
@@ -135,6 +160,8 @@ export function getProjectNavGroups(projectId: string) {
         byPath("/p/$projectId/rank-tracking"),
         byPath("/p/$projectId/saved"),
         byPath("/p/$projectId/audit"),
+        byPath("/p/$projectId/local"),
+        byPath("/p/$projectId/map-tracker"),
       ],
     },
     {

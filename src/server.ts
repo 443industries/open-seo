@@ -7,6 +7,7 @@ import { resolveUserContextFromHeaders } from "@/middleware/ensure-user/resolve"
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { SamSessionRepository } from "@/server/features/sam/SamSessionRepository";
 import { runScheduledRankChecks } from "@/server/features/rank-tracking/services/scheduledRankChecks";
+import { runScheduledLocalGridTrackers } from "@/server/features/local/services/scheduledLocalGridChecks";
 import { reconcileStaleAudits } from "@/server/features/audit/services/auditReconciler";
 import { getOrCreateOrganizationCustomer } from "@/server/billing/subscription";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
@@ -231,6 +232,13 @@ export default {
     }
     // Scope a per-request Postgres client for the cron run (no-op in D1 mode).
     await withPgClient(() => runScheduledRankChecks(env));
+    // Local map-pack grid trackers run inline (grids are small); their failures
+    // are logged inside the scanner so they can't suppress the rank watchdog.
+    try {
+      await withPgClient(() => runScheduledLocalGridTrackers(env));
+    } catch (err) {
+      console.error("[cron] Local grid tracker sweep failed:", err);
+    }
     if (watchdogError) throw watchdogError;
   },
 };

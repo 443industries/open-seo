@@ -254,6 +254,50 @@ export async function fetchDomainRankOverview(input: {
   };
 }
 
+// bulk_traffic_estimation: estimated organic traffic (ETV) + keyword counts for
+// up to 1,000 domains in one call — how you compare competitor traffic without
+// their analytics. One shared item shape per target.
+export type BulkTrafficItem = {
+  target?: string | null;
+  metrics?: {
+    organic?: {
+      etv?: number | null;
+      count?: number | null;
+      [key: string]: unknown;
+    } | null;
+    paid?: {
+      etv?: number | null;
+      count?: number | null;
+      [key: string]: unknown;
+    } | null;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+};
+
+export async function fetchBulkTrafficEstimation(input: {
+  targets: string[];
+  locationCode: number;
+  languageCode: string;
+}): Promise<DataforseoApiResponse<BulkTrafficItem[]>> {
+  const response = await dataforseoPost<DataforseoItemsTask<BulkTrafficItem>>(
+    "/v3/dataforseo_labs/google/bulk_traffic_estimation/live",
+    [
+      {
+        targets: input.targets,
+        location_code: input.locationCode,
+        language_code: input.languageCode,
+        item_types: ["organic", "paid"],
+      },
+    ],
+  );
+  const task = assertOk(response);
+  return {
+    data: task.result?.[0]?.items ?? [],
+    billing: buildTaskBilling(task),
+  };
+}
+
 type RankedKeywordsPage = {
   items: DomainRankedKeywordItem[];
   totalCount: number | null;

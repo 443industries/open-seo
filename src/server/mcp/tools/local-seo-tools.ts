@@ -670,6 +670,10 @@ export const listBusinessCategoriesTool = {
 // ---------------------------------------------------------------------------
 // get_local_rank_grid
 // ---------------------------------------------------------------------------
+// NOTE: the grid geometry/zoom/matching/summary below is mirrored verbatim in
+// src/server/features/local/services/localRankGrid.ts (computeLocalRankGrid),
+// which backs the Local SEO dashboard + Map Rank Tracker. Keep the two in sync;
+// a follow-up may collapse this handler onto that shared service.
 
 // Degrees per kilometre. Longitude degrees shrink with latitude; the cosine is
 // floored so a near-polar center can't blow the spacing up.

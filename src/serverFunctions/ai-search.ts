@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBrandLookup } from "@/server/features/ai-search/services/brandLookup";
+import { computeAiVisibilityScorecard } from "@/shared/ai-visibility-score";
 import { explorePrompt as runExplorePrompt } from "@/server/features/ai-search/services/promptExplorer";
 import { customerHasPaidPlan } from "@/server/billing/subscription";
 import { AppError } from "@/server/lib/errors";
@@ -38,4 +39,21 @@ export const explorePrompt = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertPaidPlan(context.organizationId);
     return runExplorePrompt({ ...data, projectId: context.projectId }, context);
+  });
+
+/**
+ * AI-visibility health view: the same brand lookup as lookupBrand, with a
+ * derived 0-100 health scorecard attached so the dashboard can lead with a
+ * single grade instead of the raw explorer tables.
+ */
+export const getAiVisibility = createServerFn({ method: "POST" })
+  .middleware(requireProjectContext)
+  .validator(brandLookupInputSchema)
+  .handler(async ({ data, context }) => {
+    await assertPaidPlan(context.organizationId);
+    const result = await getBrandLookup(
+      { ...data, projectId: context.projectId },
+      context,
+    );
+    return { result, scorecard: computeAiVisibilityScorecard(result) };
   });
