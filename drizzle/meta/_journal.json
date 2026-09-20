@@ -351,6 +351,13 @@
       "when": 1789855782793,
       "tag": "0049_moaning_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1789863891175,
+      "tag": "0050_curly_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }

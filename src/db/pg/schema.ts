@@ -1,5 +1,6 @@
 export * from "./app.schema";
 export * from "./local.schema";
+export * from "./metrics.schema";
 export * from "./project-context.schema";
 export * from "./reports.schema";
 export * from "./report-templates.schema";

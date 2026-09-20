@@ -1,6 +1,7 @@
 import { getDatabaseProvider } from "./provider";
 import * as sqliteApp from "./app.schema";
 import * as sqliteLocal from "./local.schema";
+import * as sqliteMetrics from "./metrics.schema";
 import * as sqliteProjectContext from "./project-context.schema";
 import * as sqliteReports from "./reports.schema";
 import * as sqliteReportTemplates from "./report-templates.schema";
@@ -13,6 +14,7 @@ import * as sqliteGsc from "./gsc.schema";
 import * as sqliteTelemetry from "./telemetry.schema";
 import * as pgApp from "./pg/app.schema";
 import * as pgLocal from "./pg/local.schema";
+import * as pgMetrics from "./pg/metrics.schema";
 import * as pgProjectContext from "./pg/project-context.schema";
 import * as pgReports from "./pg/reports.schema";
 import * as pgReportTemplates from "./pg/report-templates.schema";
@@ -36,6 +38,7 @@ import * as pgTelemetry from "./pg/telemetry.schema";
 // parity test is its drift guard.
 type AppSchema = typeof sqliteApp &
   typeof sqliteLocal &
+  typeof sqliteMetrics &
   typeof sqliteProjectContext &
   typeof sqliteReports &
   typeof sqliteReportTemplates &
@@ -52,6 +55,7 @@ const runtimeSchema =
     ? {
         ...pgApp,
         ...pgLocal,
+        ...pgMetrics,
         ...pgProjectContext,
         ...pgReports,
         ...pgReportTemplates,
@@ -66,6 +70,7 @@ const runtimeSchema =
     : {
         ...sqliteApp,
         ...sqliteLocal,
+        ...sqliteMetrics,
         ...sqliteProjectContext,
         ...sqliteReports,
         ...sqliteReportTemplates,
@@ -98,6 +103,8 @@ export const {
   backlinkSnapshots,
   localGridTrackers,
   localGridSnapshots,
+  projectMetricSchedules,
+  projectMetricSnapshots,
   projectContextSections,
   projectCompetitors,
   projectKeyPages,

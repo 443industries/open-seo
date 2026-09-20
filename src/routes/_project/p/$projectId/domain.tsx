@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { DomainOverviewPage } from "@/client/features/domain/DomainOverviewPage";
 import { useProjectDomain } from "@/client/features/projects/useProjectDefaults";
+import { ScheduleBar } from "@/client/features/metrics/ScheduleBar";
 import {
   DEFAULT_DOMAIN_KEYWORDS_PAGE_SIZE,
   domainSearchSchema,
@@ -71,16 +72,19 @@ function DomainOverviewRoute() {
   }, [projectDomain, search.domain, navigate]);
 
   return (
-    <DomainOverviewPage
-      projectId={projectId}
-      onShowRecentSearches={() => {
-        void navigate({
-          search: () => ({}),
-          replace: true,
-        });
-      }}
-      navigate={navigate}
-      routeState={routeState}
-    />
+    <>
+      <ScheduleBar projectId={projectId} metricType="domain_overview" />
+      <DomainOverviewPage
+        projectId={projectId}
+        onShowRecentSearches={() => {
+          void navigate({
+            search: () => ({}),
+            replace: true,
+          });
+        }}
+        navigate={navigate}
+        routeState={routeState}
+      />
+    </>
   );
 }

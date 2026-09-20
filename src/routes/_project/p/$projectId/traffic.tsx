@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 import { TrafficPage } from "@/client/features/traffic/TrafficPage";
+import { ScheduleBar } from "@/client/features/metrics/ScheduleBar";
 
 const trafficSearchSchema = z.object({
   domain: z.string().optional(),
@@ -34,16 +35,19 @@ function TrafficRoute() {
   const search = Route.useSearch();
 
   return (
-    <TrafficPage
-      projectId={projectId}
-      initialDomain={search.domain ?? ""}
-      initialCompetitors={parseList(search.competitors ?? "")}
-      onChange={(domain, competitors) => {
-        void navigate({
-          search: () => ({ domain, competitors: competitors.join(", ") }),
-          replace: true,
-        });
-      }}
-    />
+    <>
+      <ScheduleBar projectId={projectId} metricType="traffic" />
+      <TrafficPage
+        projectId={projectId}
+        initialDomain={search.domain ?? ""}
+        initialCompetitors={parseList(search.competitors ?? "")}
+        onChange={(domain, competitors) => {
+          void navigate({
+            search: () => ({ domain, competitors: competitors.join(", ") }),
+            replace: true,
+          });
+        }}
+      />
+    </>
   );
 }

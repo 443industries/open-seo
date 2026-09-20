@@ -8,6 +8,7 @@ import { ProjectRepository } from "@/server/features/projects/repositories/Proje
 import { SamSessionRepository } from "@/server/features/sam/SamSessionRepository";
 import { runScheduledRankChecks } from "@/server/features/rank-tracking/services/scheduledRankChecks";
 import { runScheduledLocalGridTrackers } from "@/server/features/local/services/scheduledLocalGridChecks";
+import { runScheduledProjectMetrics } from "@/server/features/metrics/services/scheduledProjectMetrics";
 import { reconcileStaleAudits } from "@/server/features/audit/services/auditReconciler";
 import { getOrCreateOrganizationCustomer } from "@/server/billing/subscription";
 import { isHostedServerAuthMode } from "@/server/lib/runtime-env";
@@ -238,6 +239,11 @@ export default {
       await withPgClient(() => runScheduledLocalGridTrackers(env));
     } catch (err) {
       console.error("[cron] Local grid tracker sweep failed:", err);
+    }
+    try {
+      await withPgClient(() => runScheduledProjectMetrics(env));
+    } catch (err) {
+      console.error("[cron] Project metrics sweep failed:", err);
     }
     if (watchdogError) throw watchdogError;
   },
